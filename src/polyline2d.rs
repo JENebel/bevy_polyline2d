@@ -1,6 +1,12 @@
 use bevy::{render::{mesh::{Mesh, self}, render_resource::PrimitiveTopology}, math::Vec3};
 
-pub struct Polyline2d {}
+#[derive(Debug, Clone)]
+pub struct Polyline2d {
+    pub path: Vec<[f32; 3]>,
+    pub width: f32,
+    pub line_placement: LinePlacement,
+    pub closed: bool,
+}
 
 fn ortho_normal(v: Vec3) -> Vec3 {
     let len = v.length();
@@ -32,6 +38,20 @@ enum Orientation {
     Straight,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum LinePlacement {
+    /// Line will have half the width on each side of the path
+    Around,
+    /// Line will be entirely on the left side of the path
+    LeftOf,
+}
+
+impl Default for LinePlacement {
+    fn default() -> Self {
+        LinePlacement::Around
+    }
+}
+
 fn orientation_test(p1: Vec3, p2: Vec3, p3: Vec3) -> Orientation {
     let v1 = p2 - p1;
     let v2 = p3 - p2;
@@ -46,31 +66,27 @@ fn orientation_test(p1: Vec3, p2: Vec3, p3: Vec3) -> Orientation {
 }
 
 impl Polyline2d {
-    pub fn new_closed(points: &Vec<[f32; 3]>, width: f32) -> Mesh {
-        Self::new_inner(points, width, true)
-    }
-
-    pub fn new(points: &Vec<[f32; 3]>, width: f32) -> Mesh {
-        Self::new_inner(points, width, false)
-    }
-
-    fn new_inner(mut points: &Vec<[f32; 3]>, width: f32, closed: bool) -> Mesh {
+    pub fn make_mesh(self) -> Mesh {
         let mut vertices: Vec<[f32; 3]> = Vec::new();
         let mut indices: Vec<u32> = Vec::new();
-        let mut points: Vec<[f32; 3]> = points.clone();
+        let mut points: Vec<[f32; 3]> = self.path;
 
-        if closed {
+        if self.closed {
             points.push(points[0]);
             points.push(points[1]);
         }
+
+        let only_inner = self.line_placement == LinePlacement::LeftOf;
+
+        let width = if only_inner { self.width } else { self.width/2. };
 
         // First vertex
         let p0 = Vec3::from(points[0]);
         let p1 = Vec3::from(points[1]);
         let v0 = p1 - p0;
         let ortho = ortho_normal(v0);
-        let vert1 = p0 + ortho * width/2.;
-        let vert2 = p0 - ortho * width/2.;
+        let vert1 = p0 + ortho * width;
+        let vert2 = if only_inner {p0} else { p0 - ortho * width };
         vertices.push([vert1.x, vert1.y, vert1.z]);
         vertices.push([vert2.x, vert2.y, vert2.z]);
         //
@@ -87,66 +103,112 @@ impl Polyline2d {
 
             match orientation_test(p1, p2, p3) {
                 Orientation::Left => {
-                    let outer2 = p2 - ortho2 * (width/2.);
-                    let outer1 = p2 - ortho1 * (width/2.);
-                    let inner = intersection_point(
-                        p1 + ortho1 * (width/2.), 
-                        p2 + ortho1 * (width/2.), 
+                    if only_inner {
+                        let inner = intersection_point(
+                            p1 + ortho1 * width, 
+                            p2 + ortho1 * width, 
 
-                        p2 + ortho2 * (width/2.), 
-                        p3 + ortho2 * (width/2.)
-                    );
+                            p2 + ortho2 * width, 
+                            p3 + ortho2 * width
+                        );
 
-                    vertices.push([outer1.x, outer1.y, outer1.z]); // 2
-                    vertices.push([inner.x, inner.y, inner.z]); // 3
-                    vertices.push([outer2.x, outer2.y, outer2.z]); // 4
+                        vertices.push([inner.x, inner.y, inner.z]); // 2
+                        vertices.push([p2.x, p2.y, p2.z]); // 3
 
-                    let i = vertices.len() - 5;
+                        let i = vertices.len() - 4;
 
-                    indices.push(i as u32);
-                    indices.push(i as u32 + 1);
-                    indices.push(i as u32 + 3);
+                        indices.push(i as u32);
+                        indices.push(i as u32 + 1);
+                        indices.push(i as u32 + 2);
 
-                    indices.push(i as u32 + 1);
-                    indices.push(i as u32 + 2);
-                    indices.push(i as u32 + 3);
+                        indices.push(i as u32 + 1);
+                        indices.push(i as u32 + 3);
+                        indices.push(i as u32 + 2);
+                    } else {
+                        let outer2 = p2 - ortho2 * (width);
+                        let outer1 = p2 - ortho1 * (width);
+                        let inner = intersection_point(
+                            p1 + ortho1 * (width), 
+                            p2 + ortho1 * (width), 
 
-                    indices.push(i as u32 + 2);
-                    indices.push(i as u32 + 4);
-                    indices.push(i as u32 + 3);
+                            p2 + ortho2 * (width), 
+                            p3 + ortho2 * (width)
+                        );
+
+                        vertices.push([outer1.x, outer1.y, outer1.z]); // 2
+                        vertices.push([inner.x, inner.y, inner.z]); // 3
+                        vertices.push([outer2.x, outer2.y, outer2.z]); // 4
+
+                        let i = vertices.len() - 5;
+
+                        indices.push(i as u32);
+                        indices.push(i as u32 + 1);
+                        indices.push(i as u32 + 3);
+
+                        indices.push(i as u32 + 1);
+                        indices.push(i as u32 + 2);
+                        indices.push(i as u32 + 3);
+
+                        indices.push(i as u32 + 2);
+                        indices.push(i as u32 + 4);
+                        indices.push(i as u32 + 3);
+                    }
                 },
                 Orientation::Right => {
-                    let outer2 = p2 + ortho2 * (width/2.);
-                    let outer1 = p2 + ortho1 * (width/2.);
-                    let inner = intersection_point(
-                        p1 - ortho1 * (width/2.), 
-                        p2 - ortho1 * (width/2.), 
+                    if only_inner {
+                        let inner = intersection_point(
+                            p1 + ortho1 * width, 
+                            p2 + ortho1 * width, 
 
-                        p2 - ortho2 * (width/2.), 
-                        p3 - ortho2 * (width/2.)
-                    );
+                            p2 + ortho2 * width, 
+                            p3 + ortho2 * width
+                        );
 
-                    vertices.push([outer1.x, outer1.y, outer1.z]); // 2
-                    vertices.push([outer2.x, outer2.y, outer2.z]); // 3
-                    vertices.push([inner.x, inner.y, inner.z]); // 4
+                        vertices.push([inner.x, inner.y, inner.z]); // 3
+                        vertices.push([p2.x, p2.y, p2.z]); // 2
 
-                    let i = vertices.len() - 5;
+                        let i = vertices.len() - 4;
 
-                    indices.push(i as u32);
-                    indices.push(i as u32 + 1);
-                    indices.push(i as u32 + 2);
+                        indices.push(i as u32);
+                        indices.push(i as u32 + 1);
+                        indices.push(i as u32 + 2);
 
-                    indices.push(i as u32 + 1);
-                    indices.push(i as u32 + 4);
-                    indices.push(i as u32 + 2);
+                        indices.push(i as u32 + 1);
+                        indices.push(i as u32 + 3);
+                        indices.push(i as u32 + 2);
+                    } else {
+                        let outer2 = p2 + ortho2 * (width);
+                        let outer1 = p2 + ortho1 * (width);
+                        let inner = intersection_point(
+                            p1 - ortho1 * (width), 
+                            p2 - ortho1 * (width), 
 
-                    indices.push(i as u32 + 2);
-                    indices.push(i as u32 + 4);
-                    indices.push(i as u32 + 3);
+                            p2 - ortho2 * (width), 
+                            p3 - ortho2 * (width)
+                        );
+
+                        vertices.push([outer1.x, outer1.y, outer1.z]); // 2
+                        vertices.push([outer2.x, outer2.y, outer2.z]); // 3
+                        vertices.push([inner.x, inner.y, inner.z]); // 4
+
+                        let i = vertices.len() - 5;
+
+                        indices.push(i as u32);
+                        indices.push(i as u32 + 1);
+                        indices.push(i as u32 + 2);
+
+                        indices.push(i as u32 + 1);
+                        indices.push(i as u32 + 4);
+                        indices.push(i as u32 + 2);
+
+                        indices.push(i as u32 + 2);
+                        indices.push(i as u32 + 4);
+                        indices.push(i as u32 + 3);
+                    }
                 },
                 Orientation::Straight => {
-                    let vert1 = p2 + ortho1 * (width/2.);
-                    let vert2 = p2 - ortho1 * (width/2.);
+                    let vert1 = p2 + ortho1 * (width);
+                    let vert2 = p2 - ortho1 * (width);
                     vertices.push([vert1.x, vert1.y, vert1.z]);
                     vertices.push([vert2.x, vert2.y, vert2.z]);
 
@@ -164,13 +226,13 @@ impl Polyline2d {
         }
 
         // Last vertex
-        if !closed {
+        if !self.closed {
             let p0 = Vec3::from(points[points.len() - 2]);
             let p1 = Vec3::from(points[points.len() - 1]);
             let v0 = p1 - p0;
             let ortho = ortho_normal(v0);
-            let vert1 = p1 + ortho * (width/2.);
-            let vert2 = p1 - ortho * (width/2.);
+            let vert1 = p1 + ortho * (width);
+            let vert2 = p1 - ortho * (width);
             vertices.push([vert1.x, vert1.y, vert1.z]);
             vertices.push([vert2.x, vert2.y, vert2.z]);
             let i = vertices.len() - 4;
@@ -208,21 +270,7 @@ impl Polyline2d {
         );
         mesh.set_indices(Some(mesh::Indices::U32(indices)));
         mesh.duplicate_vertices();
-        mesh.compute_flat_normals();
-
-        mesh
-    }
-
-    pub fn new_zero_width(points: Vec<[f32; 3]>) -> Mesh {
-        let point_cnt = points.len();
-        let mut mesh = Mesh::new(PrimitiveTopology::LineStrip);
-        mesh.insert_attribute(
-            Mesh::ATTRIBUTE_POSITION,
-            points,
-        );
-        let indices: Vec<u32> = (0..point_cnt as u32).collect();
-        mesh.set_indices(Some(mesh::Indices::U32(indices)));
-        mesh.duplicate_vertices();
+       // mesh.compute_flat_normals();
 
         mesh
     }
