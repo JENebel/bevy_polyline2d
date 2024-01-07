@@ -27,7 +27,7 @@ fn setup(
 
     let polyline = Polyline2d {
         path: points,
-        closed: true,
+        closed: false,
         line_placement: LeftOf,
         width: 10.0,
     };

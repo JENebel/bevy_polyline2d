@@ -231,8 +231,8 @@ impl Polyline2d {
             let p1 = Vec3::from(points[points.len() - 1]);
             let v0 = p1 - p0;
             let ortho = ortho_normal(v0);
-            let vert1 = p1 + ortho * (width);
-            let vert2 = p1 - ortho * (width);
+            let vert1 = p1 + ortho * width;
+            let vert2 = if only_inner { p1 } else { p1 - ortho * width };
             vertices.push([vert1.x, vert1.y, vert1.z]);
             vertices.push([vert2.x, vert2.y, vert2.z]);
             let i = vertices.len() - 4;
