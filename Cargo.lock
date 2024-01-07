@@ -341,14 +341,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bevy_2d_polyline"
-version = "0.1.0"
-dependencies = [
- "bevy",
- "bevy_pancam",
-]
-
-[[package]]
 name = "bevy_a11y"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -787,6 +779,14 @@ dependencies = [
  "radsort",
  "smallvec",
  "thread_local",
+]
+
+[[package]]
+name = "bevy_polyline2d"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_pancam",
 ]
 
 [[package]]

@@ -24,7 +24,7 @@ fn setup(
         [200.0, 100.0, 0.0],
         [0.0, 100.0, 0.0],
     ];
-    let mesh = Polyline2d::new_closed(points.clone(), 15.);
+    let mesh = Polyline2d::new_closed(&points, 15.);
 
     commands.spawn(MaterialMesh2dBundle {
         mesh: meshes.add(mesh).into(),

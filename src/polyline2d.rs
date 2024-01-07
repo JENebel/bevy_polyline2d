@@ -46,17 +46,18 @@ fn orientation_test(p1: Vec3, p2: Vec3, p3: Vec3) -> Orientation {
 }
 
 impl Polyline2d {
-    pub fn new_closed(points: Vec<[f32; 3]>, width: f32) -> Mesh {
+    pub fn new_closed(points: &Vec<[f32; 3]>, width: f32) -> Mesh {
         Self::new_inner(points, width, true)
     }
 
-    pub fn new(points: Vec<[f32; 3]>, width: f32) -> Mesh {
+    pub fn new(points: &Vec<[f32; 3]>, width: f32) -> Mesh {
         Self::new_inner(points, width, false)
     }
 
-    fn new_inner(mut points: Vec<[f32; 3]>, width: f32, closed: bool) -> Mesh {
+    fn new_inner(mut points: &Vec<[f32; 3]>, width: f32, closed: bool) -> Mesh {
         let mut vertices: Vec<[f32; 3]> = Vec::new();
         let mut indices: Vec<u32> = Vec::new();
+        let mut points: Vec<[f32; 3]> = points.clone();
 
         if closed {
             points.push(points[0]);
