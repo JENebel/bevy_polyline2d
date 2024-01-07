@@ -22,12 +22,13 @@ fn setup(
         [150.0, -50.0, 0.0],
         [200.0, 0.0, 0.0],
         [200.0, 100.0, 0.0],
+        [100.0, 100.0, 0.0],
         [0.0, 100.0, 0.0],
     ];
 
     let polyline = Polyline2d {
         path: points,
-        closed: false,
+        closed: true,
         line_placement: LeftOf,
         width: 10.0,
     };

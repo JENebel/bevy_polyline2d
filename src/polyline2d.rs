@@ -86,7 +86,7 @@ impl Polyline2d {
         let v0 = p1 - p0;
         let ortho = ortho_normal(v0);
         let vert1 = p0 + ortho * width;
-        let vert2 = if only_inner {p0} else { p0 - ortho * width };
+        let vert2 = if only_inner { p0 } else { p0 - ortho * width };
         vertices.push([vert1.x, vert1.y, vert1.z]);
         vertices.push([vert2.x, vert2.y, vert2.z]);
         //
@@ -207,8 +207,8 @@ impl Polyline2d {
                     }
                 },
                 Orientation::Straight => {
-                    let vert1 = p2 + ortho1 * (width);
-                    let vert2 = p2 - ortho1 * (width);
+                    let vert1 = p2 + ortho1 * width;
+                    let vert2 = if only_inner { p2 } else { p2 - ortho1 * width };
                     vertices.push([vert1.x, vert1.y, vert1.z]);
                     vertices.push([vert2.x, vert2.y, vert2.z]);
 
