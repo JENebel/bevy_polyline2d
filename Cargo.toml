@@ -1,5 +1,5 @@
 [package]
-name = "bevy_2d_polyline"
+name = "bevy_polyline2d"
 version = "0.1.0"
 edition = "2021"
 
