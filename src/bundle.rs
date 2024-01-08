@@ -8,7 +8,9 @@ pub struct Polyline2dBundle {
     pub material: Handle<ColorMaterial>,
     pub transform: Transform,
     pub global_transform: GlobalTransform,
-    pub visibility: VisibilityBundle,
+    pub visibility: Visibility,
+    pub inherited_visibility: InheritedVisibility,
+    pub view_visibility: ViewVisibility,
     pub mesh: Mesh2dHandle,
 }
 
@@ -19,7 +21,10 @@ impl Default for Polyline2dBundle {
             material: DEFAULT_MATERIAL_HANDLE,
             transform: Transform::default(),
             global_transform: GlobalTransform::default(),
-            visibility: VisibilityBundle::default(),
+            visibility: Visibility::default(),
+            inherited_visibility: InheritedVisibility::default(),
+            view_visibility: ViewVisibility::default(),
+
             mesh: Mesh2dHandle::default(),
         }
     }
