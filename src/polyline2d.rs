@@ -8,7 +8,7 @@ pub struct Polyline2d {
     /// Whether the line is closed or not, meaning connecting the last point back to the first
     pub closed: bool,
     /// What type of line placement to use
-    pub line_placement: LinePlacement,
+    pub line_placement: Align,
 }
 
 impl Default for Polyline2d {
@@ -17,7 +17,7 @@ impl Default for Polyline2d {
             path: Vec::new(),
             width: 1.0,
             closed: false,
-            line_placement: LinePlacement::default(),
+            line_placement: Align::default(),
         }
     }
 }
@@ -53,16 +53,16 @@ enum Orientation {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum LinePlacement {
+pub enum Align {
     /// Line will have half the width on each side of the path
-    Around,
+    Center,
     /// Line will be entirely on the left side of the path
-    LeftSide,
+    Left,
 }
 
-impl Default for LinePlacement {
+impl Default for Align {
     fn default() -> Self {
-        LinePlacement::Around
+        Align::Center
     }
 }
 
@@ -100,7 +100,7 @@ impl Polyline2d {
             points.push(points[1]);
         }
 
-        let only_inner = self.line_placement == LinePlacement::LeftSide;
+        let only_inner = self.line_placement == Align::Left;
 
         let width = if only_inner { self.width } else { self.width/2. };
 

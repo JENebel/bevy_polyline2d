@@ -8,6 +8,6 @@ pub(crate) const DEFAULT_MATERIAL_HANDLE: Handle<ColorMaterial> = Handle::weak_f
 
 pub use crate::{
     plugin::Polyline2dPlugin, 
-    polyline2d::{Polyline2d, LinePlacement},
+    polyline2d::{Polyline2d, Align},
     bundle::Polyline2dBundle,
 };

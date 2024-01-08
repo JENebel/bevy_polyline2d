@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_polyline2d::{Polyline2d, LinePlacement::*, Polyline2dBundle, Polyline2dPlugin};
+use bevy_polyline2d::{Polyline2d, Align::*, Polyline2dBundle, Polyline2dPlugin};
 use bevy_pancam::{PanCamPlugin, PanCam};
 
 #[derive(Component)]
@@ -30,7 +30,7 @@ fn setup(
     let polyline = Polyline2d {
         path: points,
         closed: true,
-        line_placement: LeftSide,
+        line_placement: Left,
         width: 10.0,
     };
     
@@ -65,10 +65,10 @@ fn input_system(
         }
 
         if buttons.just_pressed(KeyCode::L) {
-            if polyline.line_placement == LeftSide {
-                polyline.line_placement = Around;
+            if polyline.line_placement == Left {
+                polyline.line_placement = Center;
             } else {
-                polyline.line_placement = LeftSide;
+                polyline.line_placement = Left;
             }
         }
 
