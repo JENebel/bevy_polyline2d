@@ -1,18 +1,17 @@
-use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
-use bevy_polyline2d::{Polyline2d, LinePlacement::*};
+use bevy::prelude::*;
+use bevy_polyline2d::{Polyline2d, LinePlacement::*, Polyline2dBundle, Polyline2dPlugin};
 use bevy_pancam::{PanCamPlugin, PanCam};
 
 fn main() {
     App::new()
         .insert_resource(Msaa::Sample4)
-        .add_plugins((DefaultPlugins, PanCamPlugin::default()))
+        .add_plugins((DefaultPlugins, PanCamPlugin::default(), Polyline2dPlugin))
         .add_systems(Startup, setup)
         .run();
 }
 
 fn setup(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     let mat = materials.add(Color::RED.into());
@@ -33,10 +32,9 @@ fn setup(
         width: 10.0,
     };
     
-    commands.spawn(MaterialMesh2dBundle {
-        mesh: meshes.add(polyline.make_mesh()).into(),
-        material: mat.clone(),
-        transform: Transform::from_translation(Vec3::new(0.0, 0.0, 1.0)),
+    commands.spawn(Polyline2dBundle {
+        polyline,
+        material: mat,
         ..Default::default()
     });
 

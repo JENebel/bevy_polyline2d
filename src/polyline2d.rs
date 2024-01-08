@@ -1,11 +1,22 @@
-use bevy::{render::{mesh::{Mesh, self}, render_resource::PrimitiveTopology}, math::Vec3};
+use bevy::{prelude::*, render::{render_resource::PrimitiveTopology, mesh}};
 
-#[derive(Debug, Clone)]
+#[derive(Clone, Component)]
 pub struct Polyline2d {
     pub path: Vec<[f32; 3]>,
     pub width: f32,
-    pub line_placement: LinePlacement,
     pub closed: bool,
+    pub line_placement: LinePlacement,
+}
+
+impl Default for Polyline2d {
+    fn default() -> Self {
+        Polyline2d {
+            path: Vec::new(),
+            width: 1.0,
+            closed: false,
+            line_placement: LinePlacement::default(),
+        }
+    }
 }
 
 fn ortho_normal(v: Vec3) -> Vec3 {
@@ -66,10 +77,10 @@ fn orientation_test(p1: Vec3, p2: Vec3, p3: Vec3) -> Orientation {
 }
 
 impl Polyline2d {
-    pub fn make_mesh(self) -> Mesh {
+    pub(crate) fn make_mesh(&self) -> Mesh {
         let mut vertices: Vec<[f32; 3]> = Vec::new();
         let mut indices: Vec<u32> = Vec::new();
-        let mut points: Vec<[f32; 3]> = self.path;
+        let mut points: Vec<[f32; 3]> = self.path.clone();
 
         if self.closed {
             points.push(points[0]);
