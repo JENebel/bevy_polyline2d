@@ -3,8 +3,11 @@ use bevy::{prelude::*, render::{render_resource::PrimitiveTopology, mesh}};
 #[derive(Clone, Component)]
 pub struct Polyline2d {
     pub path: Vec<[f32; 3]>,
+    /// Width of the line
     pub width: f32,
+    /// Whether the line is closed or not, meaning connecting the last point back to the first
     pub closed: bool,
+    /// What type of line placement to use
     pub line_placement: LinePlacement,
 }
 
@@ -54,7 +57,7 @@ pub enum LinePlacement {
     /// Line will have half the width on each side of the path
     Around,
     /// Line will be entirely on the left side of the path
-    LeftOf,
+    LeftSide,
 }
 
 impl Default for LinePlacement {
@@ -82,12 +85,22 @@ impl Polyline2d {
         let mut indices: Vec<u32> = Vec::new();
         let mut points: Vec<[f32; 3]> = self.path.clone();
 
+        //remove duplicate points
+        let mut i = 0;
+        while i < points.len() - 1 {
+            if points[i] == points[i + 1] {
+                points.remove(i);
+            } else {
+                i += 1;
+            }
+        }
+
         if self.closed {
             points.push(points[0]);
             points.push(points[1]);
         }
 
-        let only_inner = self.line_placement == LinePlacement::LeftOf;
+        let only_inner = self.line_placement == LinePlacement::LeftSide;
 
         let width = if only_inner { self.width } else { self.width/2. };
 
@@ -280,8 +293,6 @@ impl Polyline2d {
             vertices,
         );
         mesh.set_indices(Some(mesh::Indices::U32(indices)));
-        mesh.duplicate_vertices();
-       // mesh.compute_flat_normals();
 
         mesh
     }

@@ -7,7 +7,7 @@ pub struct Polyline2dPlugin;
 impl Plugin for Polyline2dPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(PostUpdate, update_polys);
-        app.world.resource_mut::<Assets<ColorMaterial>>().insert(DEFAULT_MATERIAL_HANDLE, Color::WHITE.into());
+        app.world.resource_mut::<Assets<ColorMaterial>>().insert(DEFAULT_MATERIAL_HANDLE, Color::RED.into());
     }
 }
 
