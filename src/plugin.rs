@@ -7,13 +7,13 @@ pub struct Polyline2dPlugin;
 impl Plugin for Polyline2dPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(PostUpdate, update_polys);
-        app.world.resource_mut::<Assets<ColorMaterial>>().insert(DEFAULT_MATERIAL_HANDLE, Color::RED.into());
+        app.world_mut().resource_mut::<Assets<ColorMaterial>>().insert(&DEFAULT_MATERIAL_HANDLE, ColorMaterial::from_color(bevy::color::palettes::basic::RED));
     }
 }
 
 fn update_polys(
     mut meshes: ResMut<Assets<Mesh>>,
-    mut query: Query<(&Polyline2d, &mut Mesh2dHandle), Changed<Polyline2d>>,
+    mut query: Query<(&polyline2d::Polyline2d, &mut Mesh2dHandle), Changed<polyline2d::Polyline2d>>,
 ) {
     //println!("update_polys");
     for (poly, mut mesh) in query.iter_mut() {

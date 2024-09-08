@@ -1,4 +1,4 @@
-use bevy::{prelude::*, render::{render_resource::PrimitiveTopology, mesh}};
+use bevy::{prelude::*, render::{mesh, render_asset::RenderAssetUsages, render_resource::PrimitiveTopology}};
 
 #[derive(Clone, Component)]
 pub struct Polyline2d {
@@ -284,16 +284,13 @@ impl Polyline2d {
             vertices.pop();
             vertices.pop();
         }
-        //
         
-        let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
-
-        mesh.insert_attribute(
-            Mesh::ATTRIBUTE_POSITION,
-            vertices,
-        );
-        mesh.set_indices(Some(mesh::Indices::U32(indices)));
-
-        mesh
+        Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::default())
+            .with_inserted_attribute(
+                Mesh::ATTRIBUTE_POSITION,
+                vertices,
+            ).with_inserted_indices(
+                mesh::Indices::U32(indices)
+            )
     }
 }

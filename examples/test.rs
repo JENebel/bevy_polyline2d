@@ -47,24 +47,24 @@ fn setup(
 }
 
 fn input_system(
-    buttons: Res<Input<KeyCode>>,
+    buttons: Res<ButtonInput<KeyCode>>,
     mut query: Query<(&mut Polyline2d, &mut Transform)>
 ) {
     for (mut polyline, mut trans) in query.iter_mut() {
-        if buttons.pressed(KeyCode::Up) {
+        if buttons.pressed(KeyCode::ArrowUp) {
             trans.translation.y += 1.0;
         }
-        if buttons.pressed(KeyCode::Down) {
+        if buttons.pressed(KeyCode::ArrowDown) {
             trans.translation.y -= 1.0;
         }
-        if buttons.pressed(KeyCode::Right) {
+        if buttons.pressed(KeyCode::ArrowRight) {
             trans.translation.x += 1.0;
         }
-        if buttons.pressed(KeyCode::Left) {
+        if buttons.pressed(KeyCode::ArrowLeft) {
             trans.translation.x -= 1.0;
         }
 
-        if buttons.just_pressed(KeyCode::L) {
+        if buttons.just_pressed(KeyCode::KeyL) {
             if polyline.line_placement == Left {
                 polyline.line_placement = Center;
             } else {
@@ -72,7 +72,7 @@ fn input_system(
             }
         }
 
-        if buttons.just_pressed(KeyCode::C) {
+        if buttons.just_pressed(KeyCode::KeyC) {
             if polyline.closed {
                 polyline.closed = false;
             } else {
@@ -80,10 +80,10 @@ fn input_system(
             }
         }
 
-        if buttons.just_pressed(KeyCode::Q) {
+        if buttons.just_pressed(KeyCode::KeyQ) {
             polyline.width += 1.0;
         }
-        if buttons.just_pressed(KeyCode::W) {
+        if buttons.just_pressed(KeyCode::KeyW) {
             polyline.width -= 1.0;
         }
     }
