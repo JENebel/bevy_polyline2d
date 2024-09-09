@@ -41,7 +41,7 @@ fn setup(
 
     commands.spawn(Camera2dBundle::default())
     .insert(PanCam {
-        grab_buttons: vec![MouseButton::Middle],
+        grab_buttons: vec![MouseButton::Right, MouseButton::Middle, MouseButton::Left],
         ..default()
     });
 }

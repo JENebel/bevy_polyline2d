@@ -1,6 +1,8 @@
 mod polyline2d;
 mod plugin;
 mod bundle;
+mod flex_path;
+mod vector_extensions;
 
 use bevy::{sprite::ColorMaterial, asset::Handle};
 

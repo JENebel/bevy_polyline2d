@@ -1,5 +1,7 @@
 use bevy::{prelude::*, render::{mesh, render_asset::RenderAssetUsages, render_resource::PrimitiveTopology}};
 
+use crate::vector_extensions::{intersection_point_legacy, VectorExtensions};
+
 #[derive(Clone, Component)]
 pub struct Polyline2d {
     pub path: Vec<[f32; 3]>,
@@ -20,29 +22,6 @@ impl Default for Polyline2d {
             line_placement: Align::default(),
         }
     }
-}
-
-fn ortho_normal(v: Vec3) -> Vec3 {
-    let len = v.length();
-    let unit_v = v / len;
-    let orthogonal = (-unit_v.y, unit_v.x);
-    Vec3::new(orthogonal.0, orthogonal.1, v.z)
-}
-
-fn intersection_point(p1: Vec3, q1: Vec3, p2: Vec3, q2: Vec3) -> Vec3 {
-        let a1 = q1.y - p1.y;
-        let b1 = p1.x - q1.x;
-        let c1 = a1 * p1.x + b1 * p1.y;
-
-        let a2 = q2.y - p2.y;
-        let b2 = p2.x - q2.x;
-        let c2 = a2 * p2.x + b2 * p2.y;
-
-        let determinant = a1 * b2 - a2 * b1;
-
-        let x = (b2 * c1 - b1 * c2) / determinant;
-        let y = (a1 * c2 - a2 * c1) / determinant;
-        return Vec3::from((x, y, 0.));
 }
 
 #[derive(Debug)]
@@ -108,7 +87,7 @@ impl Polyline2d {
         let p0 = Vec3::from(points[0]);
         let p1 = Vec3::from(points[1]);
         let v0 = p1 - p0;
-        let ortho = ortho_normal(v0);
+        let ortho = v0.ortho_normal();
         let vert1 = p0 + ortho * width;
         let vert2 = if only_inner { p0 } else { p0 - ortho * width };
         vertices.push([vert1.x, vert1.y, vert1.z]);
@@ -122,13 +101,13 @@ impl Polyline2d {
             let v1 = p2 - p1;
             let v2 = p3 - p2;
 
-            let ortho1 = ortho_normal(v1);
-            let ortho2 = ortho_normal(v2);
+            let ortho1 = v1.ortho_normal();
+            let ortho2 = v2.ortho_normal();
 
             match orientation_test(p1, p2, p3) {
                 Orientation::Left => {
                     if only_inner {
-                        let inner = intersection_point(
+                        let inner = intersection_point_legacy(
                             p1 + ortho1 * width, 
                             p2 + ortho1 * width, 
 
@@ -151,7 +130,7 @@ impl Polyline2d {
                     } else {
                         let outer2 = p2 - ortho2 * (width);
                         let outer1 = p2 - ortho1 * (width);
-                        let inner = intersection_point(
+                        let inner = intersection_point_legacy(
                             p1 + ortho1 * (width), 
                             p2 + ortho1 * (width), 
 
@@ -180,7 +159,7 @@ impl Polyline2d {
                 },
                 Orientation::Right => {
                     if only_inner {
-                        let inner = intersection_point(
+                        let inner = intersection_point_legacy(
                             p1 + ortho1 * width, 
                             p2 + ortho1 * width, 
 
@@ -203,7 +182,7 @@ impl Polyline2d {
                     } else {
                         let outer2 = p2 + ortho2 * (width);
                         let outer1 = p2 + ortho1 * (width);
-                        let inner = intersection_point(
+                        let inner = intersection_point_legacy(
                             p1 - ortho1 * (width), 
                             p2 - ortho1 * (width), 
 
@@ -254,7 +233,7 @@ impl Polyline2d {
             let p0 = Vec3::from(points[points.len() - 2]);
             let p1 = Vec3::from(points[points.len() - 1]);
             let v0 = p1 - p0;
-            let ortho = ortho_normal(v0);
+            let ortho = v0.ortho_normal();
             let vert1 = p1 + ortho * width;
             let vert2 = if only_inner { p1 } else { p1 - ortho * width };
             vertices.push([vert1.x, vert1.y, vert1.z]);
