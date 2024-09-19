@@ -4,7 +4,7 @@ use super::*;
 
 #[derive(Bundle)]
 pub struct Polyline2dBundle {
-    pub polyline: polyline2d::Polyline2d,
+    pub polyline: FlexPath,
     pub material: Handle<ColorMaterial>,
     pub transform: Transform,
     pub global_transform: GlobalTransform,
@@ -17,7 +17,7 @@ pub struct Polyline2dBundle {
 impl Default for Polyline2dBundle {
     fn default() -> Self {
         Polyline2dBundle {
-            polyline: polyline2d::Polyline2d::default(),
+            polyline: FlexPath::default(),
             material: DEFAULT_MATERIAL_HANDLE,
             transform: Transform::default(),
             global_transform: GlobalTransform::default(),

@@ -13,7 +13,7 @@ impl Plugin for Polyline2dPlugin {
 
 fn update_polys(
     mut meshes: ResMut<Assets<Mesh>>,
-    mut query: Query<(&polyline2d::Polyline2d, &mut Mesh2dHandle), Changed<polyline2d::Polyline2d>>,
+    mut query: Query<(&FlexPath, &mut Mesh2dHandle), Changed<FlexPath>>,
 ) {
     //println!("update_polys");
     for (poly, mut mesh) in query.iter_mut() {

@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_polyline2d::{Polyline2d, Align::*, Polyline2dBundle, Polyline2dPlugin};
+use bevy_polyline2d::{Align::*, FlexPath, Polyline2d, Polyline2dBundle, Polyline2dPlugin};
 use bevy_pancam::{PanCamPlugin, PanCam};
 
 #[derive(Component)]
@@ -18,21 +18,21 @@ fn setup(
     mut commands: Commands,
 ) {
     let points = vec![
-        [0.0, 0.0, 0.0],
-        [150.0, 0.0, 0.0],
-        [150.0, -50.0, 0.0],
-        [200.0, 0.0, 0.0],
-        [200.0, 100.0, 0.0],
-        [100.0, 100.0, 0.0],
-        [0.0, 100.0, 0.0],
+        Vec2::new(0.0, 0.0),
+        Vec2::new(150.0, 0.0),
+        Vec2::new(150.0, -50.0),
+        Vec2::new(200.0, 0.0),
+        Vec2::new(200.0, 100.0),
+        Vec2::new(0.0, 100.0),
     ];
 
-    let polyline = Polyline2d {
-        path: points,
-        closed: true,
-        line_placement: Left,
-        width: 10.0,
-    };
+    let polyline = FlexPath::new(
+        points,
+        10.0,
+        bevy_polyline2d::Alignment::RightSide,
+        bevy_polyline2d::CornerStyle::Sharp,
+        true
+    );
     
     commands.spawn(Polyline2dBundle {
         polyline,

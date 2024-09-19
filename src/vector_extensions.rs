@@ -18,12 +18,11 @@ impl VectorExtensions for Vec3 {
 
 impl VectorExtensions for Vec2 {
     fn determinant(&self, other: Self) -> f32 {
-        self.x * other.y - self.y * other.x
+        self.perp_dot(other)
     }
 
     fn ortho_normal(&self) -> Self {
-        let norm = self.normalize();
-        Vec2::new(-norm.y, norm.x)
+        self.perp().normalize()
     }
 }
 
@@ -39,7 +38,7 @@ pub fn intersection_point(p1: Vec2, d1: Vec2, p2: Vec2, d2: Vec2) -> Option<Vec2
         p2.y - p1.y
     );
 
-    let t = delta.determinant(d2) / det;
+    let t = delta.perp_dot(d2) / det;
 
     let intersection = Vec2::new(
         p1.x + t * d1.x,
@@ -47,6 +46,19 @@ pub fn intersection_point(p1: Vec2, d1: Vec2, p2: Vec2, d2: Vec2) -> Option<Vec2
     );
 
     Some(intersection)
+}
+
+pub fn calc_left_side_segment(p1: Vec2, p2: Vec2, width: f32) -> (Vec2, Vec2) {
+    let vec = p2 - p1;
+    let perp = vec.perp().normalize();
+    let start = p1 + perp * width;
+    let end = p2 + perp * width;
+    (start, end)
+}
+
+pub fn calc_right_side_segment(p1: Vec2, p2: Vec2, width: f32) -> (Vec2, Vec2) {
+    let reverse_side = calc_left_side_segment(p2, p1, width);
+    (reverse_side.1, reverse_side.0)
 }
 
 pub fn intersection_point_legacy(p1: Vec3, v1: Vec3, p2: Vec3, v2: Vec3) -> Vec3 {

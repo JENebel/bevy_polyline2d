@@ -1,6 +1,8 @@
 mod polyline2d;
 mod plugin;
 mod bundle;
+
+//#[allow(dead_code)]
 mod flex_path;
 mod vector_extensions;
 
@@ -12,4 +14,5 @@ pub use crate::{
     plugin::Polyline2dPlugin, 
     polyline2d::{Polyline2d, Align},
     bundle::Polyline2dBundle,
+    flex_path::{FlexPath, CornerStyle, Alignment},
 };
