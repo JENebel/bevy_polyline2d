@@ -2,42 +2,62 @@ use bevy::prelude::*;
 use bevy_polyline2d::{Align::*, FlexPath, Polyline2d, Polyline2dBundle, Polyline2dPlugin};
 use bevy_pancam::{PanCamPlugin, PanCam};
 
+pub(crate) const BLUE_MATERIAL_HANDLE: Handle<ColorMaterial> = Handle::weak_from_u128(0xf274befa6c0e7f11d40d8931715303ac);
+
 #[derive(Component)]
 struct RotatingObject;
 
 fn main() {
-    App::new()
-        .insert_resource(Msaa::Sample4)
+    let mut app = App::new();
+    app.insert_resource(Msaa::Sample4)
         .add_plugins((DefaultPlugins, PanCamPlugin::default(), Polyline2dPlugin))
         .add_systems(Startup, setup)
-        .add_systems(Update, input_system)
-        .run();
+        .add_systems(Update, input_system);
+    app.world_mut().resource_mut::<Assets<ColorMaterial>>().insert(&BLUE_MATERIAL_HANDLE, ColorMaterial::from_color(bevy::color::palettes::basic::BLUE));
+    app.run();
 }
 
 fn setup(
     mut commands: Commands,
 ) {
     let points = vec![
-        Vec2::new(0.0, 0.0),
+        /*Vec2::new(0.0, 0.0),
         Vec2::new(150.0, 0.0),
         Vec2::new(150.0, -50.0),
         Vec2::new(200.0, 0.0),
         Vec2::new(200.0, 100.0),
+        Vec2::new(0.0, 100.0),*/
+
+        Vec2::new(0.0, 0.0),
         Vec2::new(0.0, 100.0),
+        Vec2::new(100.0, 100.0),
+        Vec2::new(50.0, 0.0),
+        //Vec2::new(100.0, 0.0),
+
     ];
 
-    let polyline = FlexPath::new(
-        points,
-        10.0,
-        bevy_polyline2d::Alignment::RightSide,
-        bevy_polyline2d::CornerStyle::Sharp,
-        true
-    );
-    
     commands.spawn(Polyline2dBundle {
-        polyline,
+        polyline: FlexPath::new(
+            points.clone(),
+            10.,
+            bevy_polyline2d::Alignment::Center,
+            bevy_polyline2d::CornerStyle::Rounded { radius: 15., resolution: 24 },
+            false
+        ),
         ..Default::default()
     }).insert(RotatingObject);
+
+    commands.spawn(Polyline2dBundle {
+        polyline: FlexPath::new(
+            points,
+            1.,
+            bevy_polyline2d::Alignment::Center,
+            bevy_polyline2d::CornerStyle::Sharp,
+            false
+        ),
+        material: BLUE_MATERIAL_HANDLE,
+        ..Default::default()
+    }).insert(RotatingObject).insert(Transform::from_translation(Vec3::new(0., 0., 1.)));
 
     commands.spawn(Camera2dBundle::default())
     .insert(PanCam {

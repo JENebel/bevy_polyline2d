@@ -26,6 +26,26 @@ impl VectorExtensions for Vec2 {
     }
 }
 
+#[derive(Debug)]
+pub enum Orientation {
+    Left,
+    Right,
+    Straight,
+}
+
+pub fn orientation_test(p1: Vec2, p2: Vec2, p3: Vec2) -> Orientation {
+    let v1 = p2 - p1;
+    let v2 = p3 - p2;
+    let det = v1.determinant(v2);
+    if det > f32::EPSILON {
+        Orientation::Left
+    } else if det < -f32::EPSILON {
+        Orientation::Right
+    } else {
+        Orientation::Straight
+    }
+}
+
 pub fn intersection_point(p1: Vec2, d1: Vec2, p2: Vec2, d2: Vec2) -> Option<Vec2> {
     let det = d1.determinant(d2);
 

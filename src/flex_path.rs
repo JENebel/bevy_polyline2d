@@ -131,12 +131,12 @@ impl FlexPath {
         let Some(prev_idx) = self.get_prev_idx(idx) else {
             // First segment
             let next = self.locations[idx + 1];
-            let vert1 = calc_left_side_segment(location, next, self.left_width).0;
-            let vert2 = calc_right_side_segment(location, next, self.right_width).0;
-            vertices.push([vert1.x, vert1.y, 0.]);
-            vertices.push([vert2.x, vert2.y, 0.]);
+            let left_vert = calc_left_side_segment(location, next, self.left_width).0;
+            let right_vert = calc_right_side_segment(location, next, self.right_width).0;
+            vertices.push([left_vert.x, left_vert.y, 0.]);
+            vertices.push([right_vert.x, right_vert.y, 0.]);
             if self.is_connected {
-                self.add_segment_indices(indices, idx);
+                self.add_sharp_segment_indices(indices, idx);
             }
             return;
         };
@@ -144,14 +144,118 @@ impl FlexPath {
         let Some(next_idx) = self.get_next_idx(idx) else {
             // Last segment
             let prev = self.locations[idx - 1];
-            let vert1 = calc_left_side_segment(prev, location, self.left_width).1;
-            let vert2 = calc_right_side_segment(prev, location, self.right_width).1;
-            vertices.push([vert1.x, vert1.y, 0.]);
-            vertices.push([vert2.x, vert2.y, 0.]);
-            self.add_segment_indices(indices, idx);
+            let left_vert = calc_left_side_segment(prev, location, self.left_width).1;
+            let right_vert = calc_right_side_segment(prev, location, self.right_width).1;
+            vertices.push([left_vert.x, left_vert.y, 0.]);
+            vertices.push([right_vert.x, right_vert.y, 0.]);
+            let a = (vertices.len() - 4) as u32;
+            let b = a + 1;
+            let c = a + 2;
+            let d = a + 3;
+            self.add_quad_indices(indices, a, b, c, d);
             return;
         };
 
+        let location = self.locations[idx];
+        let prev = self.locations[prev_idx];
+        let next = self.locations[next_idx];
+
+        match self.corner_style {
+            CornerStyle::Sharp => self.add_sharp_corner(vertices, indices, idx, prev_idx, next_idx),
+            CornerStyle::Rounded { .. } => match orientation_test(prev, location, next) {
+                Orientation::Left => todo!(),
+                Orientation::Right => self.add_rounded_right_corner(vertices, indices, location, prev, next),
+                Orientation::Straight => (), // do nothing
+            },
+        }
+    }
+
+    fn add_rounded_right_corner(&self,
+        vertices: &mut Vec<[f32; 3]>,
+        indices: &mut Vec<u32>,
+        location: Vec2,
+        prev: Vec2,
+        next: Vec2
+    ) {
+        let CornerStyle::Rounded { radius, resolution } = self.corner_style else {
+            return;
+        };
+
+        let right_side_a = calc_right_side_segment(prev, location, self.right_width);
+        let right_side_b = calc_right_side_segment(location, next, self.right_width);
+        
+        let inner_angle =  -(next - location).angle_between(prev - location);
+        let corner_angle = 2. * PI - inner_angle;
+
+        let corner_origo = {
+            let intersection = intersection_point(
+                right_side_a.0, right_side_a.1 - right_side_a.0,
+                right_side_b.1, right_side_b.0 - right_side_b.1
+            ).unwrap();
+
+            let rotation_vec = Vec2::from_angle(-inner_angle / 2.);
+            let towards_origo = rotation_vec.rotate(next - location).normalize();
+            intersection + towards_origo * (radius / (corner_angle / 2.).sin())
+        };
+        let fan_count: i32 = 2.max((resolution as f32 / (2. * PI) * (corner_angle - PI)) as i32);
+
+        let out_vec = {
+            let projected = Self::project_point_onto_line(right_side_a.0, right_side_a.1, corner_origo);
+            projected - corner_origo
+        };
+
+        let angle_step_size = (corner_angle - PI) / fan_count as f32;
+
+        for i in 0..fan_count + 1 {
+            let angle = -i as f32 * angle_step_size;
+            let rotation_vec = Vec2::from_angle(angle);
+            let dir_vec = rotation_vec.rotate(out_vec).normalize();
+            let outer_vert = corner_origo + dir_vec * (radius + self.total_width()); // left
+            let inner_vert = corner_origo + dir_vec * radius; // right
+            vertices.push([outer_vert.x, outer_vert.y, 0.]);
+            vertices.push([inner_vert.x, inner_vert.y, 0.]);
+
+            let start_index = vertices.len() as u32 - 4;
+            let a = start_index;
+            let b = a + 1;
+            let c = a + 2;
+            let d = a + 3;
+            self.add_quad_indices(indices, a, b, c, d);
+        }
+    }
+
+    fn project_point_onto_line(p1: Vec2, p2: Vec2, p: Vec2) -> Vec2 {
+        let v = p2 - p1;
+        let w = p - p1;
+        let proj_factor = w.dot(v) / v.dot(v);
+        let p_proj = p1 + v * proj_factor;
+        p_proj
+    }
+
+    fn add_quad_indices(&self, 
+        indices: &mut Vec<u32>,
+        a: u32,
+        b: u32,
+        c: u32,
+        d: u32
+    ) {
+        indices.push(a);
+        indices.push(b);
+        indices.push(c);
+
+        indices.push(b);
+        indices.push(d);
+        indices.push(c);
+    }
+
+    fn add_sharp_corner(&self, 
+        vertices: &mut Vec<[f32; 3]>,
+        indices: &mut Vec<u32>,
+        idx: usize,
+        prev_idx: usize,
+        next_idx: usize
+    ) {
+        let location = self.locations[idx];
         let prev = self.locations[prev_idx];
         let next = self.locations[next_idx];
 
@@ -173,11 +277,11 @@ impl FlexPath {
             vertices.push([left_vert.x, left_vert.y, 0.]);
             vertices.push([right_vert.x, right_vert.y, 0.]);
 
-            self.add_segment_indices(indices, idx);
+            self.add_sharp_segment_indices(indices, idx);
         }
     }
 
-    fn add_segment_indices(&self,
+    fn add_sharp_segment_indices(&self,
         indices: &mut Vec<u32>,
         index: usize
     ) {
@@ -199,55 +303,75 @@ impl FlexPath {
         indices.push(c); // c
     }
 
+    fn total_width(&self) -> f32 {
+        self.left_width + self.right_width
+    }
+
     /// Calculate cap for unconnected path.
     fn calc_caps(&self, vertices: &mut Vec<[f32; 3]>, indices: &mut Vec<u32>) {
+        // End cap
+        let last = self.locations[self.locations.len() - 1];
+        let second_last = self.locations[self.locations.len() - 2];
+        let end_origo_left = calc_left_side_segment(second_last, last, self.left_width).1;
+        let end_origo_right = calc_right_side_segment(second_last, last, self.right_width).1;
+        let end_origo = end_origo_left.midpoint(end_origo_right);
+        let end_segment_vec = self.locations[self.locations.len() - 2] - self.locations[self.locations.len() - 1];
+        self.calc_cap(vertices, indices, end_origo, end_segment_vec, (vertices.len() - 1) as u32, (vertices.len() - 2) as u32);
+
         // Start cap
+        let first = self.locations[0];
+        let second = self.locations[1];
+        let start_origo_left = calc_left_side_segment(first, second, self.left_width).0;
+        let start_origo_right = calc_right_side_segment(first, second, self.right_width).0;
+        let start_origo = start_origo_left.midpoint(start_origo_right);
+        let start_segment_vec = self.locations[1] - self.locations[0];
+        self.calc_cap(vertices, indices, start_origo, start_segment_vec, 0, 1);
+    }
+
+    /// Calculate cap for unconnected path.
+    fn calc_cap(&self, 
+        vertices: &mut Vec<[f32; 3]>,
+        indices: &mut Vec<u32>,
+        origo: Vec2,
+        segment_vec: Vec2,
+        index_a: u32,
+        index_b: u32
+    ) {
         let CornerStyle::Rounded { resolution, .. } = self.corner_style else {
             return;
         };
-
-        let start = self.locations[0];
-        let next = self.locations[1];
-        let vec = next - start;
         
-        let fan_vec = vec.perp().normalize();
+        // Add origo as separate vertex
+        let first_vertex_idx = vertices.len() as u32;
+        //vertices.push([origo.x, origo.y, 0.]);
 
-        let rotation_angle = vec.y.atan2(vec.x);
-
+        // Add fan vertices
+        let fan_vec = segment_vec.perp().normalize();
         let angle_increment = PI / (resolution / 2 - 1) as f32;
-        
-        for i in 1..resolution / 2 {
-            let angle = i as f32 * angle_increment + rotation_angle;
-            println!("{}", angle.to_degrees());
-            let rotation_vec = Vec2::new(angle.cos(), angle.sin()).normalize();
-            let fan_vec = rotation_vec.rotate(fan_vec);
-
-            let vert = start + fan_vec * self.left_width;
-
-            println!("{:?}", vert);
+        let new_vertices: u32 = resolution as u32 / 2 - 2;
+        for i in 1..new_vertices + 1 {
+            let angle = i as f32 * angle_increment;
+            
+            let rotation_vec = Vec2::from_angle(angle);
+            let vert = origo + (rotation_vec.rotate(fan_vec) * (self.total_width() / 2.));
+            vertices.push([vert.x, vert.y, 0.]);
         }
 
-        /*let num_points = 10; // Number of points
-        let half_circle = std::f32::consts::PI; // Half-circle in radians (π)
-        let angle_increment = half_circle / (num_points - 1) as f32;
+        // First and last triangle, reuses existing vertices
+        indices.push(index_a);
+        indices.push(first_vertex_idx + 1);
+        indices.push(first_vertex_idx);
 
-        // Vector at the end of which the half-circle points will be placed
-        let end_vector = Vec2::new(2.0, 1.0); // Example vector
-        let rotation_angle = end_vector.y.atan2(end_vector.x); // Angle of the vector
+        indices.push(index_a);
+        indices.push(first_vertex_idx + new_vertices - 1);
+        indices.push(index_b);
 
-        // Rotation vector for the computed angle
-        let rotation_vec = Vec2::new(rotation_angle.cos(), rotation_angle.sin());
-
-        // Calculate and rotate each point
-        for i in 0..num_points {
-            let angle = i as f32 * angle_increment;
-            let point_on_half_circle = Vec2::new(angle.cos(), angle.sin());
-
-            // Rotate the half-circle point by the rotation vector's angle
-            let rotated_point = rotation_vec.rotate(point_on_half_circle);
-
-            println!("Rotated Point {}: {:?}", i + 1, rotated_point);
-        }*/
+        // Middle triangles, only using new vertices
+        for i in 1..new_vertices - 1 {
+            indices.push(index_a);
+            indices.push(first_vertex_idx + i + 1);
+            indices.push(first_vertex_idx + i);
+        }
     }
 }
 
@@ -259,9 +383,9 @@ fn rungoddammit() {
             Vec2::new(0., 1.),
             Vec2::new(1., 1.),
         ],
-        0.5,
+        1.,
         Alignment::Center,
-        CornerStyle::Rounded { radius: 0., resolution: 20 },
+        CornerStyle::Rounded { radius: 0.25, resolution: 20 },
         false,
     );
 

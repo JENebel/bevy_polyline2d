@@ -24,12 +24,7 @@ impl Default for Polyline2d {
     }
 }
 
-#[derive(Debug)]
-enum Orientation {
-    Left,
-    Right,
-    Straight,
-}
+
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Align {
@@ -43,6 +38,13 @@ impl Default for Align {
     fn default() -> Self {
         Align::Center
     }
+}
+
+#[derive(Debug)]
+enum Orientation {
+    Left,
+    Right,
+    Straight,
 }
 
 fn orientation_test(p1: Vec3, p2: Vec3, p3: Vec3) -> Orientation {
