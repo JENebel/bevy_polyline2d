@@ -26,7 +26,7 @@ impl VectorExtensions for Vec2 {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Orientation {
     Left,
     Right,
@@ -95,6 +95,14 @@ pub fn intersection_point_legacy(p1: Vec3, v1: Vec3, p2: Vec3, v2: Vec3) -> Vec3
     let x = (b2 * c1 - b1 * c2) / determinant;
     let y = (a1 * c2 - a2 * c1) / determinant;
     return Vec3::from((x, y, 0.));
+}
+
+pub fn project_point_onto_line(p: Vec2, p1: Vec2, p2: Vec2) -> Vec2 {
+    let v = p2 - p1;
+    let w = p - p1;
+    let proj_factor = w.dot(v) / v.dot(v);
+    let p_proj = p1 + v * proj_factor;
+    p_proj
 }
 
 #[test]

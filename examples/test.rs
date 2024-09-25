@@ -10,7 +10,15 @@ struct RotatingObject;
 fn main() {
     let mut app = App::new();
     app.insert_resource(Msaa::Sample4)
-        .add_plugins((DefaultPlugins, PanCamPlugin::default(), Polyline2dPlugin))
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                title: "BMPoly".to_string(),
+                present_mode: bevy::window::PresentMode::AutoNoVsync,
+                ..default()
+            }),
+            ..default()
+        }))
+        .add_plugins((PanCamPlugin::default(), Polyline2dPlugin))
         .add_systems(Startup, setup)
         .add_systems(Update, input_system);
     app.world_mut().resource_mut::<Assets<ColorMaterial>>().insert(&BLUE_MATERIAL_HANDLE, ColorMaterial::from_color(bevy::color::palettes::basic::BLUE));
@@ -30,10 +38,12 @@ fn setup(
 
         Vec2::new(0.0, 0.0),
         Vec2::new(0.0, 100.0),
+        Vec2::new(100.0, 0.0),
         Vec2::new(100.0, 100.0),
-        Vec2::new(50.0, 0.0),
-        //Vec2::new(100.0, 0.0),
-
+        Vec2::new(0.0, 200.0),
+        Vec2::new(-100.0, 0.0),
+        Vec2::new(-200.0, 0.0),
+        Vec2::new(-100.0, -100.0),
     ];
 
     commands.spawn(Polyline2dBundle {
@@ -42,25 +52,24 @@ fn setup(
             10.,
             bevy_polyline2d::Alignment::Center,
             bevy_polyline2d::CornerStyle::Rounded { radius: 15., resolution: 24 },
-            false
+            true
         ),
         ..Default::default()
     }).insert(RotatingObject);
 
     commands.spawn(Polyline2dBundle {
         polyline: FlexPath::new(
-            points,
-            1.,
+            points.clone(),
+            2.,
             bevy_polyline2d::Alignment::Center,
             bevy_polyline2d::CornerStyle::Sharp,
-            false
+            true
         ),
         material: BLUE_MATERIAL_HANDLE,
         ..Default::default()
     }).insert(RotatingObject).insert(Transform::from_translation(Vec3::new(0., 0., 1.)));
 
-    commands.spawn(Camera2dBundle::default())
-    .insert(PanCam {
+    commands.spawn(Camera2dBundle::default()).insert(PanCam {
         grab_buttons: vec![MouseButton::Right, MouseButton::Middle, MouseButton::Left],
         ..default()
     });
