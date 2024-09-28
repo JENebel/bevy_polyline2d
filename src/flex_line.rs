@@ -50,7 +50,7 @@ pub enum LineColor {
 }
 
 impl LineColor {
-    /// gradient: 1 for right color, -1 for left color
+    /// gradient: 1 for right side, -1 for left side
     fn get(&self, index: usize, gradient: f32) -> [f32; 4] {
         match self {
             LineColor::Fill(color) => {
@@ -161,7 +161,8 @@ impl FlexLine {
 
 
         if self.is_connected() {
-            // Add dummy vertices to the beginnig. These will be replaced by the 2 last vertices at the end
+            // Add dummy vertices to the beginnig.
+            // These will be replaced by the 2 last vertices at the end
             vertices.push([0., 0., 0.]);
             vertices.push([0., 0., 0.]);
             colors.push(self.color.get(0, -1.));
@@ -214,6 +215,7 @@ impl FlexLine {
     ) {
         let location = self.locations[index];
         let Some(prev_idx) = self.get_prev_idx(index) else {
+            // First 2 vertices
             let next = self.locations[index + 1];
             let left_vert = calc_left_side_segment(location, next, self.left_width()).0;
             let right_vert = calc_right_side_segment(location, next, self.right_width()).0;
@@ -221,11 +223,12 @@ impl FlexLine {
             vertices.push([right_vert.x, right_vert.y, 0.]);
             colors.push(self.color.get(index, -1.));
             colors.push(self.color.get(index,  1.));
+
             return;
         };
 
         let Some(next_idx) = self.get_next_idx(index) else {
-            // Last segment
+            // Last 2 vertices
             let prev = self.locations[index - 1];
             let left_vert = calc_left_side_segment(prev, location, self.left_width()).1;
             let right_vert = calc_right_side_segment(prev, location, self.right_width()).1;
@@ -239,6 +242,7 @@ impl FlexLine {
             let c = a + 2;
             let d = a + 3;
             self.add_quad_indices(indices, a, b, c, d);
+
             return;
         };
 
@@ -303,9 +307,9 @@ impl FlexLine {
         let out_vec = {
             // Can't use same side, as radius=0 won't work then
             let other_side = if orientation == Orientation::Right {
-                calc_left_side_segment(prev, location, self.right_width())
+                calc_left_side_segment(prev, location, self.left_width())
             } else {
-                calc_right_side_segment(prev, location, self.left_width())
+                calc_right_side_segment(prev, location, self.right_width())
             };
             let projected = project_point_onto_line(corner_origo, other_side.0, other_side.1);
             projected - corner_origo

@@ -38,7 +38,12 @@ fn setup(
 
         Vec2::new(0.0, 0.0),
         Vec2::new(0.0, 100.0),
+        Vec2::new(200.0, 300.0),
+        Vec2::new(200.0, 150.0),
         Vec2::new(100.0, 0.0),
+        /*Vec2::new(100.0, 0.0),
+        Vec2::new(100.0, 0.0),
+        Vec2::new(100.0, 0.0),*/
     ];
 
     /*commands.spawn(Polyline2dBundle {
@@ -56,15 +61,29 @@ fn setup(
     transparent.set_alpha(0.);
 
     commands.spawn(FlexLine2dBundle {
-        
         polyline: FlexLine::new(
             points.clone(),
-            10.,
-            Alignment::Center,
-            CornerStyle::Rounded { radius: 0., resolution: 25 },
-            ConnectionStyle::Unconnected,
+            20.,
+            Alignment::LeftSide,
+            CornerStyle::Rounded { radius: 15., resolution: 36 },
+            ConnectionStyle::Connected,
             LineColor::GradientAcross{
-                left: palettes::css::BLUE.into(), 
+                left: transparent, 
+                right: palettes::css::BLUE.into()
+            },
+        ),
+        ..Default::default()
+    }).insert(RotatingObject).insert(Transform::from_translation(Vec3::new(0., 0., 1.)));
+
+    commands.spawn(FlexLine2dBundle {
+        polyline: FlexLine::new(
+            points.clone(),
+            20.,
+            Alignment::RightSide,
+            CornerStyle::Rounded { radius: 15., resolution: 24 },
+            ConnectionStyle::Connected,
+            LineColor::GradientAcross{
+                left: palettes::css::RED.into(), 
                 right: transparent
             },
         ),
