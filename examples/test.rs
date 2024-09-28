@@ -1,5 +1,5 @@
-use bevy::prelude::*;
-use bevy_polyline2d::{Align::*, FlexPath, Polyline2d, Polyline2dBundle, Polyline2dPlugin};
+use bevy::{color::palettes, prelude::*};
+use bevy_flexline_2d::*;
 use bevy_pancam::{PanCamPlugin, PanCam};
 
 pub(crate) const BLUE_MATERIAL_HANDLE: Handle<ColorMaterial> = Handle::weak_from_u128(0xf274befa6c0e7f11d40d8931715303ac);
@@ -18,7 +18,7 @@ fn main() {
             }),
             ..default()
         }))
-        .add_plugins((PanCamPlugin::default(), Polyline2dPlugin))
+        .add_plugins((PanCamPlugin::default(), FlexLine2dPlugin))
         .add_systems(Startup, setup)
         .add_systems(Update, input_system);
     app.world_mut().resource_mut::<Assets<ColorMaterial>>().insert(&BLUE_MATERIAL_HANDLE, ColorMaterial::from_color(bevy::color::palettes::basic::BLUE));
@@ -39,14 +39,9 @@ fn setup(
         Vec2::new(0.0, 0.0),
         Vec2::new(0.0, 100.0),
         Vec2::new(100.0, 0.0),
-        Vec2::new(100.0, 100.0),
-        Vec2::new(0.0, 200.0),
-        Vec2::new(-100.0, 0.0),
-        Vec2::new(-200.0, 0.0),
-        Vec2::new(-100.0, -100.0),
     ];
 
-    commands.spawn(Polyline2dBundle {
+    /*commands.spawn(Polyline2dBundle {
         polyline: FlexPath::new(
             points.clone(),
             10.,
@@ -55,17 +50,24 @@ fn setup(
             true
         ),
         ..Default::default()
-    }).insert(RotatingObject);
+    }).insert(RotatingObject);*/
 
-    commands.spawn(Polyline2dBundle {
-        polyline: FlexPath::new(
+    let mut transparent = Color::srgb(0., 0., 0.);
+    transparent.set_alpha(0.);
+
+    commands.spawn(FlexLine2dBundle {
+        
+        polyline: FlexLine::new(
             points.clone(),
-            2.,
-            bevy_polyline2d::Alignment::Center,
-            bevy_polyline2d::CornerStyle::Sharp,
-            true
+            10.,
+            Alignment::Center,
+            CornerStyle::Rounded { radius: 0., resolution: 25 },
+            ConnectionStyle::Unconnected,
+            LineColor::GradientAcross{
+                left: palettes::css::BLUE.into(), 
+                right: transparent
+            },
         ),
-        material: BLUE_MATERIAL_HANDLE,
         ..Default::default()
     }).insert(RotatingObject).insert(Transform::from_translation(Vec3::new(0., 0., 1.)));
 
@@ -77,7 +79,7 @@ fn setup(
 
 fn input_system(
     buttons: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&mut Polyline2d, &mut Transform)>
+    mut query: Query<(&mut bevy_flexline_2d::FlexLine, &mut Transform)>
 ) {
     for (mut polyline, mut trans) in query.iter_mut() {
         if buttons.pressed(KeyCode::ArrowUp) {
@@ -94,18 +96,18 @@ fn input_system(
         }
 
         if buttons.just_pressed(KeyCode::KeyL) {
-            if polyline.line_placement == Left {
-                polyline.line_placement = Center;
+            if polyline.alignment == Alignment::LeftSide {
+                polyline.alignment = Alignment::Center;
             } else {
-                polyline.line_placement = Left;
+                polyline.alignment = Alignment::LeftSide;
             }
         }
 
         if buttons.just_pressed(KeyCode::KeyC) {
-            if polyline.closed {
-                polyline.closed = false;
+            if polyline.connection_style == ConnectionStyle::Connected {
+                polyline.connection_style = ConnectionStyle::Unconnected;
             } else {
-                polyline.closed = true;
+                polyline.connection_style = ConnectionStyle::Connected;
             }
         }
 

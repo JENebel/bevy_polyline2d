@@ -1,30 +1,4 @@
-use bevy::math::{Vec2, Vec3};
-
-pub trait VectorExtensions {
-    fn determinant(&self, other: Self) -> f32;
-    fn ortho_normal(&self) -> Self;
-}
-
-impl VectorExtensions for Vec3 {
-    fn determinant(&self, other: Self) -> f32 {
-        self.x * other.y - self.y * other.x
-    }
-
-    fn ortho_normal(&self) -> Self {
-        let norm = self.normalize();
-        Vec3::new(-norm.y, norm.x, self.z)
-    }
-}
-
-impl VectorExtensions for Vec2 {
-    fn determinant(&self, other: Self) -> f32 {
-        self.perp_dot(other)
-    }
-
-    fn ortho_normal(&self) -> Self {
-        self.perp().normalize()
-    }
-}
+use bevy::math::Vec2;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Orientation {
@@ -33,10 +7,11 @@ pub enum Orientation {
     Straight,
 }
 
+/// Returns the orientation of the "turn" in p2, in points p1, p2, p3.
 pub fn orientation_test(p1: Vec2, p2: Vec2, p3: Vec2) -> Orientation {
     let v1 = p2 - p1;
     let v2 = p3 - p2;
-    let det = v1.determinant(v2);
+    let det = v1.perp_dot(v2);
     if det > f32::EPSILON {
         Orientation::Left
     } else if det < -f32::EPSILON {
@@ -46,8 +21,10 @@ pub fn orientation_test(p1: Vec2, p2: Vec2, p3: Vec2) -> Orientation {
     }
 }
 
+/// Returns the intersection point of two lines defined by a point and a direction vector.
+/// Returns None if the lines are parallel or coincident.
 pub fn intersection_point(p1: Vec2, d1: Vec2, p2: Vec2, d2: Vec2) -> Option<Vec2> {
-    let det = d1.determinant(d2);
+    let det = d1.perp_dot(d2);
 
     if det.abs() < 1e-10 {
         return None; // Lines are parallel or coincident
@@ -80,23 +57,6 @@ pub fn calc_right_side_segment(p1: Vec2, p2: Vec2, width: f32) -> (Vec2, Vec2) {
     let reverse_side = calc_left_side_segment(p2, p1, width);
     (reverse_side.1, reverse_side.0)
 }
-
-pub fn intersection_point_legacy(p1: Vec3, v1: Vec3, p2: Vec3, v2: Vec3) -> Vec3 {
-    let a1 = v1.y - p1.y;
-    let b1 = p1.x - v1.x;
-    let c1 = a1 * p1.x + b1 * p1.y;
-
-    let a2 = v2.y - p2.y;
-    let b2 = p2.x - v2.x;
-    let c2 = a2 * p2.x + b2 * p2.y;
-
-    let determinant = a1 * b2 - a2 * b1;
-
-    let x = (b2 * c1 - b1 * c2) / determinant;
-    let y = (a1 * c2 - a2 * c1) / determinant;
-    return Vec3::from((x, y, 0.));
-}
-
 pub fn project_point_onto_line(p: Vec2, p1: Vec2, p2: Vec2) -> Vec2 {
     let v = p2 - p1;
     let w = p - p1;
